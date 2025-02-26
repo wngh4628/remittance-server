@@ -1,14 +1,9 @@
-import { IsInt, IsNotEmpty, Min } from 'class-validator';
-
-import { TargetCurrency } from '../helper/constant';
-import { HttpErrorConstants } from '../helper/http.error.objects';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class RequestQuoteDto {
   @IsNotEmpty()
-  @IsInt(HttpErrorConstants.NEGATIVE_NUMBER)
-  @Min(1, HttpErrorConstants.NEGATIVE_NUMBER)
-  amount: number;
-
-  @IsNotEmpty()
-  targetCurrency: TargetCurrency;
+  @IsNumber()
+  @Type(() => Number)
+  quoteId: number;
 }

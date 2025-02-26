@@ -5,69 +5,63 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-
+import { Response } from 'express';
 import { WinstonLoggerService } from '../logger/winston.logger.service';
+import { HttpErrorFormat } from '../http/http-error-objects';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly logger: WinstonLoggerService) {} // DI 사용
+  constructor(private readonly logger: WinstonLoggerService) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    let status: number;
+    let httpError: HttpErrorFormat;
 
     if (exception instanceof HttpException) {
-      const status = exception.getStatus();
-      const message = exception.getResponse() as string | { message: string };
-      const stack = exception.stack;
-
-      // Logging the error
-      try {
-        const jsonString = JSON.stringify({
-          timestamp: new Date().toISOString(),
-          statusCode: status,
-          message: typeof message === 'string' ? message : message.message,
-          stack: stack,
-        });
-        this.logger.error(jsonString);
-      } catch (error) {
-        this.logger.error(error);
+      status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+      
+      if (typeof exceptionResponse === 'string') {
+        httpError = {
+          errorCode: 'UNKNOWN',
+          resultMsg: exceptionResponse,
+        };
+      } else {
+        httpError = exceptionResponse as HttpErrorFormat;
       }
-
-      // Sending response to the client
-      response.status(status).json({
-        success: false,
-        timestamp: new Date().toISOString(),
-        statusCode: status,
-        path: request.url,
-        message,
-      });
     } else {
-      const status = HttpStatus.INTERNAL_SERVER_ERROR;
-      const message = 'Internal server error';
-
-      // Logging the error
-      try {
-        this.logger.error(
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            statusCode: status,
-            message,
-          }),
-        );
-      } catch (error) {
-        this.logger.error(error);
-      }
-
-      // Sending response to the client
-      response.status(status).json({
-        success: false,
-        timestamp: new Date().toISOString(),
-        statusCode: status,
-        path: request.url,
-        message,
-      });
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+      httpError = {
+        errorCode: 'INTERNAL_SERVER_ERROR',
+        resultMsg: 'Internal server error',
+      };
     }
+
+    // 로깅 처리
+    const logPayload = {
+      timestamp: new Date().toISOString(),
+      statusCode: status,
+      error: httpError,
+      stack: exception instanceof Error ? exception.stack : null,
+    };
+
+    try {
+      this.logger.error(JSON.stringify(logPayload));
+    } catch (logError) {
+      console.error(logError);
+    }
+
+    // 클라이언트에 반환할 에러 응답 구성
+    const errorResponse: Record<string, any> = {
+      resultCode: status,
+      resultMsg: httpError.resultMsg,
+    };
+
+    if (httpError.description) {
+      errorResponse.description = httpError.description;
+    }
+    response.status(status).json(errorResponse);
   }
 }

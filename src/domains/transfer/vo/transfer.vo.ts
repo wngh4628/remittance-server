@@ -1,67 +1,45 @@
-import { RequestQuoteDto } from '../dtos/request.quote.dto';
-import { QuoteDto } from '../dtos/response.quote.dto';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { Quote } from '../entities/quote.entity';
-import { TargetCurrency } from '../helper/constant';
-import { BadRequestException } from '@nestjs/common';
+import { Transfer } from '../entities/transfer.entity';
+import { TargetCurrency, TransferStatusAllowed } from '../helper/constant';
 
 export class TransferVO {
-  sendingAmount: number;
-  receivingAmount: number;
+  quoteId: number;
+  userIdx: number;
   targetCurrency: TargetCurrency;
-  fee: number;
-  exchangeRate: number;
-  expirationTime: Date;
+  amount: number;
+  targetAmount: number;
 
-  constructor(dto: RequestQuoteDto, exchangeRate) {
-    if (!Number.isInteger(dto.amount) || dto.amount < 1) {
-      throw new BadRequestException('NEGATIVE_NUMBER');
+  constructor(quote: Quote) {
+    if (quote.status == TransferStatusAllowed.COMPLETED) {
+      throw new HttpException(
+        '이미 처리가 완료된 요청입니다.',
+        HttpStatus.CONFLICT,
+      );
     }
+    const expireTime = new Date(quote.expireTime); // 만료 시간
+    const currentTime = new Date(); // 현재 시간
 
-    this.sendingAmount = dto.amount;
-    this.targetCurrency = dto.targetCurrency;
-    this.exchangeRate = exchangeRate;
+    const diffInMinutes =
+      (currentTime.getTime() - expireTime.getTime()) / (1000 * 60);
 
-    // 수수료 계산 적용
-    this.fee = this.calculateFee(dto.amount, dto.targetCurrency);
-    
-    // 받는 금액 계산
-    this.receivingAmount = (this.sendingAmount - this.fee) / this.exchangeRate;
-    console.log('this.receivingAmount: ', this.receivingAmount);
-    // 견적 만료 시간: 현재 시간 + 10분
-    this.expirationTime = new Date(new Date().getTime() + 10 * 60000);
-  }
-
-  /**
-   *  통화별 수수료 계산 로직
-   */
-  private calculateFee(amount: number, currency: TargetCurrency): number {
-    switch (currency) {
-      case 'USD':
-        return amount > 1000000
-          ? amount * 0.001 + 3000 // 100만원 초과 → 수수료율 0.1%, 고정 3000원
-          : amount * 0.002 + 1000; // 100만원 이하 → 수수료율 0.2%, 고정 1000원
-
-      case 'JPY':
-        return amount * 0.005 + 3000; // 고정 3000엔, 수수료율 0.5%
+    if (diffInMinutes > 10) {
+      throw new HttpException('견적서가 만료 되었습니다.', HttpStatus.GONE);
     }
-  }
-  getQuote(quoteId: number): QuoteDto {
-    return {
-      quoteId: quoteId,
-      exchangeRate: this.exchangeRate,
-      expireTime: this.expirationTime,
-      targetAmount: parseFloat(this.receivingAmount.toFixed(2)),
-    };
+    this.quoteId = quote.quoteId;
+    this.userIdx = quote.userIdx;
+    this.targetCurrency = quote.targetCurrency;
+    this.amount = quote.sourceAmount;
+    this.targetAmount = quote.targetAmount;
   }
 
-  toEntity(userIdx: number): Quote {
-    const quote = new Quote();
-    quote.userIdx = userIdx;
-    quote.amount = this.sendingAmount;
-    quote.targetCurrency = this.targetCurrency;
-    quote.exchangeRate = this.exchangeRate;
-    quote.expireTime = this.expirationTime;
-    quote.targetAmount = parseFloat(this.receivingAmount.toFixed(2));
-    return quote;
+  toEntity(): Transfer {
+    const transfer = new Transfer();
+    transfer.quoteId = this.quoteId;
+    transfer.userIdx = this.userIdx;
+    transfer.amount = this.amount;
+    transfer.targetCurrency = this.targetCurrency;
+    transfer.status = TransferStatusAllowed.COMPLETED;
+    return transfer;
   }
 }

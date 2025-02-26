@@ -22,6 +22,6 @@ export class AuthController {
     dto: LoginDto,
   ) {
     const result = await this.authService.login(dto);
-    return HttpResponse.ok(res, { body: result });
+    return HttpResponse.ok(res, result);
   }
 }

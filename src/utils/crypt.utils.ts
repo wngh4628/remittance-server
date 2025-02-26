@@ -50,8 +50,8 @@ export function encryptAES(text: string): string {
   const AES_IV = process.env.AES_IV || process.env.AES_IV_SECONDARY;
 
   // AES_KEY & AES_IV를 Buffer로 변환 (올바른 hex 변환)
-  const keyBuffer = Buffer.from(AES_KEY, 'hex'); // ✅ hex 변환 적용
-  const ivBuffer = Buffer.from(AES_IV, 'hex'); // ✅ hex 변환 적용
+  const keyBuffer = Buffer.from(AES_KEY, 'hex');
+  const ivBuffer = Buffer.from(AES_IV, 'hex'); 
 
   // 암호화 수행
   const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, ivBuffer);
@@ -63,8 +63,8 @@ export function encryptAES(text: string): string {
 // AES-256-CBC 복호화 함수
 export function decryptAES(encryptedText: string): string {
   // 환경 변수에서 AES 키 & IV 가져오기
-  const AES_KEY = process.env.AES_KEY || '12345678901234567890123456789012'; // 32바이트 키
-  const AES_IV = process.env.AES_IV || '1234567890123456'; // 16바이트 IV
+  const AES_KEY = process.env.AES_KEY || process.env.AES_KEY_SECONDARY;
+  const AES_IV = process.env.AES_IV || process.env.AES_IV_SECONDARY;
   const decipher = crypto.createDecipheriv(
     'aes-256-cbc',
     Buffer.from(AES_KEY),

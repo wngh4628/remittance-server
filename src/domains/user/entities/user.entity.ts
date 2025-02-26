@@ -7,23 +7,20 @@ import { IdType } from '../helper/constant';
 @Unique(['userId'])
 export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 64, unique: true })
-  userId: string; // 이메일 형식으로 저장 (중복 방지)
+  userId: string; // 이메일 형식으로 저장 유니크 o
 
   @Column({ type: 'varchar', length: 100 })
-  password: string; // 비밀번호 (해싱 필수)
+  password: string; // 비밀번호 해싱
 
   @Column({ type: 'varchar', length: 32 })
-  name: string; // 이름
+  name: string; // 이름 유니크 x
 
-  @Column({ type: 'varchar', length: 50 })
-  idType: IdType; // ID 유형 (예: 주민등록번호, 여권 등)
+  @Column({
+    type: 'enum',
+    enum: ['REG_NO', 'BUSINESS_NO'],
+  })
+  idType: IdType; //  주민등록번호 or 사업자 타입
 
   @Column({ type: 'varchar', length: 256 })
-  idValue: string; // ID 값
-
-  // @Column({
-  //   nullable: true,
-  //   default: null,
-  // })
-  // refreshToken: string;
+  idValue: string; // 주민등록번호 or 사업자 번호 값 해싱
 }

@@ -3,19 +3,17 @@ import status from 'http-status-codes';
 export default function responseJson<T>(
   status: number,
   object?: T,
-): { status: number; message: string; result?: T | unknown } {
+): { resultCode: number; resultMsg: string; result?: T | unknown } {
   if (object === undefined) {
     return {
-      status: status,
-      message: statusMessage(status),
-      result: object,
+      resultCode: status,
+      resultMsg: statusMessage(status),
     };
   }
-
   return {
-    status: status,
-    message: statusMessage(status),
-    result: object,
+    ...object,
+    resultCode: status,
+    resultMsg: statusMessage(status),
   };
 }
 
@@ -23,7 +21,7 @@ export function statusMessage(httpStatus: number): string {
   switch (httpStatus) {
     // 200:OK
     case status.OK:
-      return 'Success';
+      return 'OK';
     // 201:CREATED
     case status.CREATED:
       return 'Created';

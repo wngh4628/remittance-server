@@ -8,10 +8,10 @@ import HttpResponse from '../../../src/core/http/http-response';
 import { TraceTemplate } from '../../../src/core/template/trace.template';
 import { REQUEST_SUCCESS_MESSAGE } from '../../../src/domains/user/helper/http.response.objects';
 
-// ✅ Jest Mock 설정
+
 jest.mock('../../../src/core/http/http-response', () => ({
   default: {
-    ok: jest.fn(), // ✅ `ok` 메서드를 Jest Mock 함수로 설정
+    ok: jest.fn(),
   },
 }));
 

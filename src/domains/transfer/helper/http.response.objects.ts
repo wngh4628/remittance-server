@@ -4,7 +4,7 @@ export interface HttpErrorFormat {
 }
 
 export const REQUEST_SUCCESS_MESSAGE = {
-  USER_REGISTERED_SUCCESS: {
+  REQUEST_TRANSFER_SUCCESS: {
     stateCode: 200,
     resultMsg: 'OK',
   } as HttpErrorFormat,

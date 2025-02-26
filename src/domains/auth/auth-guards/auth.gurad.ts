@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '../../../domains/user/entities/user.entity';
+import { HttpErrorConstants } from '../helper/http.error.objects';
 
 @Injectable()
 export class UserGuard extends AuthGuard('jwt') {
@@ -23,12 +24,8 @@ export class UserGuard extends AuthGuard('jwt') {
       console.error('Error in UserGuard:', error);
 
       if (error.name === 'UnauthorizedException') {
-        throw new UnauthorizedException({
-          status: 401,
-          message: 'TokenExpire',
-        });
+        throw new UnauthorizedException(HttpErrorConstants.AUTH_TOKEN_INVALID);
       }
-
       // 기본적으로 false를 반환하여 인증을 거부합니다.
       return false;
     }

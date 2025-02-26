@@ -10,7 +10,7 @@ import { Response } from 'express';
 
 export default class HttpResponse {
   static ok<T>(res: Response, body?: T): Response<unknown> {
-    return res.status(status.OK).json(responseJson(status.OK, body));
+    return res.json(responseJson(status.OK, body));
   }
 
   static created<T>(

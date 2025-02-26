@@ -1,8 +1,10 @@
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsString, IsPositive } from 'class-validator';
 
 export class QuoteDto {
   @IsNotEmpty()
-  @IsString()
+  @IsNumber()
+  @Type(() => Number)
   quoteId: number;
 
   @IsNotEmpty()
@@ -12,7 +14,7 @@ export class QuoteDto {
 
   @IsNotEmpty()
   @IsString()
-  expireTime: Date;
+  expireTime: Date | string;
 
   @IsNotEmpty()
   @IsNumber()
